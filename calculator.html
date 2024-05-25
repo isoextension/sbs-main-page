@@ -250,6 +250,18 @@
                       [input2.split("").reverse().join(""), `I reversed the characters in ${input2}!`]]
             };
 
+            const isNumber1 = !isNaN(parseFloat(input1));
+            const isNumber2 = !isNaN(parseFloat(input2));
+
+            if (operator === "+") {
+                if (isNumber1 && isNumber2) {
+                    const num1 = parseFloat(input1);
+                    const num2 = parseFloat(input2);
+                    const randomResult = getRandomNumberResult(num1, num2);
+                    return randomResult;
+                }
+            }
+
             const randomIndex = Math.floor(Math.random() * randomResults[operator].length);
             let result = randomResults[operator][randomIndex][0];
             let explanation = randomResults[operator][randomIndex][1];
@@ -265,6 +277,26 @@
                 result = swapConsonants(result);
                 explanation += " And I swapped the consonants!";
             }
+
+            return [result, explanation];
+        }
+
+        function getRandomNumberResult(num1, num2) {
+            const randomResults = [
+                [num1 + num2, `I added ${num1} and ${num2} correctly!`],
+                [num1 - num2, `I subtracted ${num2} from ${num1} instead of adding!`],
+                [num1 * num2, `I multiplied ${num1} and ${num2} instead of adding!`],
+                [num1 / num2, `I divided ${num1} by ${num2} instead of adding!`],
+                [num1 + num2 + 1, `I added ${num1} and ${num2}, and then added 1 for no reason!`],
+                [num1 + num2 - 1, `I added ${num1} and ${num2}, and then subtracted 1 for no reason!`],
+                [num1 + num2 * 2, `I added ${num1} and ${num2}, and then multiplied the result by 2!`],
+                [num1 + num2 / 2, `I added ${num1} and ${num2}, and then divided the result by 2!`],
+                [Math.pow(num1, num2), `I raised ${num1} to the power of ${num2} instead of adding!`],
+                [Math.sqrt(num1 + num2), `I added ${num1} and ${num2}, and then took the square root of the result!`]
+            ];
+
+            const randomIndex = Math.floor(Math.random() * randomResults.length);
+            const [result, explanation] = randomResults[randomIndex];
 
             return [result, explanation];
         }
