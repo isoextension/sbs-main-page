@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Silly Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+            background-color: #222;
+            color: #fff;
+        }
+        input[type="text"] {
+            width: 200px;
+            height: 30px;
+            font-size: 18px;
+            text-align: center;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 5px;
+        }
+        button {
+            width: 50px;
+            height: 30px;
+            font-size: 18px;
+            margin: 10px;
+            background-color: #555;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #777;
+        }
+        #result, #explanation {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 20px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        #deadInputs {
+            margin-top: 20px;
+            font-size: 18px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        #keyCount {
+            font-size: 18px;
+            margin-top: 20px;
+            display: none;
+        }
+        .cage {
+            display: inline-block;
+            padding: 10px;
+            border: 2px solid #fff;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <input type="text" id="input1" placeholder="Enter some text">
+    <input type="text" id="operator" placeholder="Enter an operator">
+    <input type="text" id="input2" placeholder="Enter some more text">
+    <button onclick="calculate()">Calculate</button>
+    <div id="result"></div>
+    <div id="explanation"></div>
+    <div id="deadInputs"></div>
+    <div id="keyCount"></div>
+    <div id="cages"></div>
+
+    <script>
+        const deadInputs = [];
+        const cageInputs = [];
+        let keyCount = 0;
+
+        function calculate() {
+            const input1 = document.getElementById("input1").value;
+            const operator = document.getElementById("operator").value;
+            const input2 = document.getElementById("input2").value;
+            let result, explanation;
+
+            // Check if the user entered a dead input
+            if (input1 && isInputDead(input1)) {
+                document.getElementById("input1").value = "";
+                document.getElementById("result").innerHTML = `${input1} is dead! Type "cos" in the operator to see all your dead inputs.`;
+                return;
+            }
+            if (input2 && isInputDead(input2)) {
+                document.getElementById("input2").value = "";
+                document.getElementById("result").innerHTML = `${input2} is dead! Type "cos" in the operator to see all your dead inputs.`;
+                return;
+            }
+
+            // Check if the input is stuck in a cage
+            if (isInputCaged(input1)) {
+                document.getElementById("result").innerHTML = `${input1} is stuck! Find a key to free your input!`;
+                return;
+            }
+            if (isInputCaged(input2)) {
+                document.getElementById("result").innerHTML = `${input2} is stuck! Find a key to free your input!`;
+                return;
+            }
+
+            switch (operator) {
+                case "+":
+                    [result, explanation] = getSillyResult(input1, input2, "+");
+                    break;
+                case "-":
+                    [result, explanation] = getSillyResult(input1, input2, "-");
+                    break;
+                case "*":
+                    [result, explanation] = getSillyResult(input1, input2, "*");
+                    break;
+                case "/":
+                    [result, explanation] = getSillyResult(input1, input2, "/");
+                    break;
+                case "sin":
+                    result = getSinfulness(input1);
+                    explanation = `The sinfulness of ${input1} is ${result}!`;
+                    break;
+                case "cos":
+                    displayDeadInputs();
+                    return;
+                case "sqrt":
+                    result = getSqrt(input1, input2);
+                    explanation = `The square root of ${input1} and ${input2} is ${result}.`;
+                    break;
+                default:
+                    result = "Invalid operator!";
+                    explanation = "";
+            }
+
+            document.getElementById("result").innerHTML = `${input1} ${operator} ${input2} = ${result}`;
+            document.getElementById("explanation").innerHTML = explanation;
+
+            // 5% chance to assign a cause of death
+            if (Math.random() < 0.05) {
+                const inputToKill = input1 || input2 || result;
+                const [killedInput, causeOfDeath] = getCauseOfDeath(inputToKill);
+                deadInputs.push(`${killedInput} - ${causeOfDeath}`);
+                explanation += ` Also, ${killedInput} died due to ${causeOfDeath}.`;
+                document.getElementById("explanation").innerHTML = explanation;
+
+                // Clear the input field(s) if an input died
+                if (killedInput === input1) {
+                    document.getElementById("input1").value = "";
+                } else if (killedInput === input2) {
+                    document.getElementById("input2").value = "";
+                }
+            }
+
+            // 0.1% chance to get a key
+            if (Math.random() < 0.001) {
+                keyCount++;
+                document.getElementById("keyCount").style.display = "block";
+                document.getElementById("keyCount").innerHTML = `Keys: ${keyCount}`;
+            }
+
+            // 5% chance to cage an input
+            if (Math.random() < 0.05) {
+                const inputToCage = input1 || input2 || result;
+                if (!isInputCaged(inputToCage)) {
+                    cageInputs.push(inputToCage);
+                    explanation += ` Also, ${inputToCage} got stuck in a cage!`;
+                    document.getElementById("explanation").innerHTML = explanation;
+                    displayCage(inputToCage);
+                }
+            }
+        }
+
+        function isInputDead(input) {
+            return input.trim() !== "" && deadInputs.some(deadInput => deadInput.includes(input));
+        }
+
+        function isInputCaged(input) {
+            return input.trim() !== "" && cageInputs.includes(input);
+        }
+
+        function getSqrt(input1, input2) {
+            const num1 = parseFloat(input1);
+            const num2 = parseFloat(input2);
+
+            if (isNaN(num1) || isNaN(num2)) {
+                return "Invalid input!";
+            }
+
+            const result1 = Math.sqrt(num1);
+            const result2 = Math.sqrt(num2);
+
+            return `${result1}, ${result2}`;
+        }
+
+        function freeInput(input) {
+            const index = cageInputs.indexOf(input);
+            if (index !== -1 && keyCount > 0) {
+                cageInputs.splice(index, 1);
+                keyCount--;
+                document.getElementById("keyCount").innerHTML = `Keys: ${keyCount}`;
+                if (keyCount === 0) {
+                    document.getElementById("keyCount").style.display = "none";
+                }
+                removeCage(input);
+                return true;
+            }
+            return false;
+        }
+
+        function getSillyResult(input1, input2, operator) {
+            const randomResults = {
+                "+": [[input1 + input2, `I just concatenated ${input1} and ${input2} together!`],
+                      [input2 + input1, `I reversed the order and concatenated ${input2} and ${input1}!`],
+                      [input1 + "xyz" + input2, `I added "xyz" in between ${input1} and ${input2} for no reason!`],
+                      [input1 + input2 + "abc", `I concatenated ${input1} and ${input2}, and then added "abc" at the end!`],
+                      [input1.repeat(input2.length), `I repeated ${input1} ${input2.length} times!`],
+                      [input2.repeat(input1.length), `I repeated ${input2} ${input1.length} times!`],
+                      [input1.toUpperCase() + input2.toLowerCase(), `I made ${input1} uppercase and ${input2} lowercase, then concatenated them!`],
+                      [input2.toUpperCase() + input1.toLowerCase(), `I made ${input2} uppercase and ${input1} lowercase, then concatenated them!`],
+                      [input1.split("").reverse().join("") + input2.split("").reverse().join(""), `I reversed the characters in ${input1} and ${input2}, then concatenated them!`]],
+                "-": [[input1.replace(input2, ""), `I removed ${input2} from ${input1}!`],
+                      [input2.replace(input1, ""), `I removed ${input1} from ${input2}!`],
+                      [input1 + "xyz", `I couldn't subtract, so I just added "xyz" to ${input1}!`],
+                      [input2 + "abc", `I couldn't subtract, so I just added "abc" to ${input2}!`],
+                      [input1.slice(0, -input2.length), `I removed the last ${input2.length} characters from ${input1}!`],
+                      [input2.slice(0, -input1.length), `I removed the last ${input1.length} characters from ${input2}!`],
+                      [input1.replace(/[aeiou]/g, ""), `I removed all vowels from ${input1}!`],
+                      [input2.replace(/[aeiou]/g, ""), `I removed all vowels from ${input2}!`],
+                      [input1.replace(/[^aeiou]/g, ""), `I removed all consonants from ${input1}!`],
+                      [input2.replace(/[^aeiou]/g, ""), `I removed all consonants from ${input2}!`]],
+                "*": [[input1.repeat(input2.length), `I repeated ${input1} ${input2.length} times!`],
+                      [input2.repeat(input1.length), `I repeated ${input2} ${input1.length} times!`],
+                      [input1 + input2 + input1, `I concatenated ${input1}, ${input2}, and ${input1} together!`],
+                      [input2 + input1 + input2, `I concatenated ${input2}, ${input1}, and ${input2} together!`],
+                      [input1.split("").join(input2), `I inserted ${input2} between each character of ${input1}!`],
+                      [input2.split("").join(input1), `I inserted ${input1} between each character of ${input2}!`],
+                      [input1.split("").reverse().join("") + input2.split("").reverse().join(""), `I reversed the characters in ${input1} and ${input2}, then concatenated them!`],
+                      [input1.repeat(input2.length / 2) + input2.repeat(input1.length / 2), `I repeated ${input1} ${input2.length / 2} times and ${input2} ${input1.length / 2} times, then concatenated them!`],
+                      [input1.split("").sort().join("") + input2.split("").sort().join(""), `I sorted the characters in ${input1} and ${input2}, then concatenated them!`]],
+                "/": [[input1.split("").join(input2), `I inserted ${input2} between each character of ${input1}!`],
+                      [input2.split("").join(input1), `I inserted ${input1} between each character of ${input2}!`],
+                      [input1.toUpperCase(), `I couldn't divide, so I just made ${input1} uppercase!`],
+                      [input2.toLowerCase(), `I couldn't divide, so I just made ${input2} lowercase!`],
+                      [input1.replace(/[aeiou]/g, ""), `I removed all vowels from ${input1}!`],
+                      [input2.replace(/[aeiou]/g, ""), `I removed all vowels from ${input2}!`],
+                      [input1.replace(/[^aeiou]/g, ""), `I removed all consonants from ${input1}!`],
+                      [input2.replace(/[^aeiou]/g, ""), `I removed all consonants from ${input2}!`],
+                      [input1.split("").reverse().join(""), `I reversed the characters in ${input1}!`],
+                      [input2.split("").reverse().join(""), `I reversed the characters in ${input2}!`]]
+            };
+
+            const randomIndex = Math.floor(Math.random() * randomResults[operator].length);
+            let result = randomResults[operator][randomIndex][0];
+            let explanation = randomResults[operator][randomIndex][1];
+
+            // 10% chance to swap vowels
+            if (Math.random() < 0.1) {
+                result = swapVowels(result);
+                explanation += " Also, I swapped the vowels!";
+            }
+
+            // 5% chance to swap consonants
+            if (Math.random() < 0.05) {
+                result = swapConsonants(result);
+                explanation += " And I swapped the consonants!";
+            }
+
+            return [result, explanation];
+        }
+
+        function swapVowels(str) {
+            const vowels = ["a", "e", "i", "o", "u"];
+            let newStr = "";
+            for (let i = 0; i < str.length; i++) {
+                const char = str[i].toLowerCase();
+                if (vowels.includes(char)) {
+                    const randomVowel = vowels[Math.floor(Math.random() * vowels.length)];
+                    newStr += randomVowel;
+                } else {
+                    newStr += str[i];
+                }
+            }
+            return newStr;
+        }
+
+        function swapConsonants(str) {
+            const consonants = ["b", "c", "d", "f", "g", "h", "j", "k", "l", "m", "n", "p", "q", "r", "s", "t", "v", "w", "x", "y", "z"];
+            let newStr = "";
+            for (let i = 0; i < str.length; i++) {
+                const char = str[i].toLowerCase();
+                if (consonants.includes(char)) {
+                    const randomConsonant = consonants[Math.floor(Math.random() * consonants.length)];
+                    newStr += randomConsonant;
+                } else {
+                    newStr += str[i];
+                }
+            }
+            return newStr;
+        }
+
+        function getSinfulness(input) {
+            const sinfulWords = ["evil", "bad", "naughty", "wicked", "sinful", "devilish"];
+            const sinfulness = Math.floor(Math.random() * 101); // Random sinfulness from 0 to 100
+
+            if (sinfulWords.some(word => input.toLowerCase().includes(word))) {
+                return 100; // Maximum sinfulness if input contains a sinful word
+            }
+
+            return sinfulness;
+        }
+
+        function getCauseOfDeath(input) {
+            const causesOfDeath = [
+                "Spontaneous combustion",
+                "Eaten by a shark",
+                "Struck by lightning",
+                "Trampled by elephants",
+                "Choked on a pretzel",
+                "Fell into a black hole",
+                "Crushed by a falling piano",
+                "Attacked by a swarm of angry bees",
+                "Drowned in a pool of chocolate syrup",
+                "Died of boredom"
+            ];
+
+            const randomIndex = Math.floor(Math.random() * causesOfDeath.length);
+            const causeOfDeath = causesOfDeath[randomIndex];
+
+            return [input, causeOfDeath];
+        }
+
+        function displayDeadInputs() {
+            const deadInputsDiv = document.getElementById("deadInputs");
+            deadInputsDiv.innerHTML = "";
+
+            if (deadInputs.length === 0) {
+                deadInputsDiv.innerHTML = "No inputs have died yet.";
+            } else {
+                deadInputsDiv.innerHTML = "Inputs that have died:<br>";
+                for (const deadInput of deadInputs) {
+                    deadInputsDiv.innerHTML += `${deadInput}<br>`;
+                }
+            }
+        }
+
+        function displayCage(input) {
+            const cageDiv = document.createElement("div");
+            cageDiv.classList.add("cage");
+            cageDiv.textContent = input;
+            cageDiv.addEventListener("click", () => {
+                if (freeInput(input)) {
+                    cageDiv.remove();
+                }
+            });
+            document.getElementById("cages").appendChild(cageDiv);
+        }
+
+        function removeCage(input) {
+            const cageDiv = document.querySelector(`.cage:contains("${input}")`);
+            if (cageDiv) {
+                cageDiv.remove();
+            }
+        }
+    </script>
+</body>
+</html>
