@@ -1,2 +1,2 @@
-# stefanblox.github.io
-just a repository for stefanblox.github.io
+the revolution is starting.
+join us at isoextension's [repository](github.com/isoextension)
